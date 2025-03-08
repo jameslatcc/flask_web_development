@@ -4,18 +4,20 @@ from flask_restful import Resource
 from werkzeug.utils import secure_filename
 
 
-UPLOAD_FOLDER = 'C:\\Users\\hhunt\\Downloads\\uploads'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','iso','mp4'}
+current_path = os.path.abspath(os.getcwd())
+upload_path = os.path.join(current_path, 'uploads')
+os.makedirs(upload_path, exist_ok=True)
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'JPG', 'jpeg', 'gif','iso','mp4'}
 server = Flask(__name__)
-server.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+server.config['upload_path'] = upload_path
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @server.route('/uploads/<name>')
-def download_file(name):
-    return send_from_directory(server.config['UPLOAD_FOLDER'],name)
+def upload_ok(name):
+    return "after upload, the file name: {}".format(name)
 
 @server.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -29,8 +31,8 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(server.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('download_file', name=filename))
+            file.save(os.path.join(server.config['upload_path'], filename))
+            return redirect(url_for('upload_ok', name=filename))
     return '''
     <!doctype html>
     <title>Upload New File</title>
