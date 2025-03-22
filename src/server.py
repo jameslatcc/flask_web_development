@@ -15,7 +15,7 @@ if not os.path.exists(server.config['upload_path']):
 def home():
     return render_template('index.html')
 
-@server.route('/show_files', methods=['GET','POST'])
+@server.route('/show_files', methods=['GET'])
 def show_files():
     files = os.listdir(server.config['upload_path'])  
     return render_template('show_files.html', files=files)
