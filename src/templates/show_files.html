@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show Files</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+    <style>
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+        }
+        .progress-bar-inner {
+            height: 20px;
+            background-color: #4caf50;
+            width: 0%;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            margin: 10px 0;
+        }
+        .file-item button {
+            background-color: rgb(237, 78, 78);
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <form id="showFilesForm" action="/show_files" method="get" enctype="multipart/form-data">
+        <div style="text-align:center">
+            <h1>Your uploaded files</h1>
+            <ul class="fileList" id="mainList" style="list-style-type: none">
+                {% if files %}
+                    {% for file in files %}
+                        <li class = "file-item"> 
+                            {{ file }} 
+                            <button class="deleteBtn" data-filename="{{ file }}">Delete</button>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class = "file-item"> No files uploaded yet </li>
+                {% endif %}
+            </ul>
+        </div>
+    </form>   
+        <div style="text-align: center">
+            <h3>Upload your files</h3>
+            <div id="status"></div>
+            <div class="progress-bar">
+                <div class="progress-bar-inner" id="progressBar"></div>
+            </div>
+
+            <form id="uploadForm" action="/uploads" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" id="fileInput">
+                <button type="submit">Upload</button><br><br><br>
+            </form>
+        </div>
+    </form>
+
+    <script>
+        const socket = io.connect('http://127.0.0.1:5000');
+        const form = document.getElementById('uploadForm');
+        const progressBar = document.getElementById('progressBar');
+        const statusDiv = document.getElementById('status');
+        const fileList = document.getElementById('mainList');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // Create XMLHttpRequest to handle file upload
+            const xhr = new XMLHttpRequest();
+
+            // Open the request
+            xhr.open('POST', '/uploads', true);
+
+            // Handle progress updates
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percent = (event.loaded / event.total) * 100;
+                    progressBar.style.width = percent + '%';
+                    progressBar.textContent = Math.round(percent) + '%';
+                    socket.emit('progress', { progress: percent });
+                }
+            };
+
+            // When the file upload completes
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    fetch('/show_files', { method: 'GET' })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Replace the file list section with the updated list
+                        const newFileList = document.createElement('div');
+                        newFileList.innerHTML = html;
+                        const newList = newFileList.querySelector('.fileList');
+                        fileList.innerHTML = newList.innerHTML; // Update file list
+                    });
+                } else {
+                    statusDiv.textContent = 'Upload failed!';
+                }
+            };
+
+            // Send the request
+            xhr.send(formData);
+        });
+
+        // Delete button click event
+        fileList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('deleteBtn')) {
+                const filename = e.target.getAttribute('data-filename');
+
+                // Send DELETE request to Flask
+                fetch(`/delete/${filename}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // If the response status code is not 2xx, throw an error
+                        return response.json().then(data => { throw new Error(data.error || 'Unknown error') });
+                    }
+                    return response.json(); // Proceed if response is successful
+                }) 
+                .then(data => {
+                    console.log('Response data:', data);  // Log the server response for debugging
+
+                    // If there's a success message in the response, delete the file from the list
+                    if (data.message) {
+                        const fileItem = document.getElementById('file-' + filename);
+                        if (fileItem) {
+                            fileItem.remove();
+                        }
+                    }
+                    // Show alert with either success or error message
+                    alert(data.message || data.error);
+                })
+                .catch(err => {
+                    console.error('Error deleting file:', err);
+                    alert('Error deleting file.');
+                });
+            }
+        });
+
+        // Listen for progress updates from the server (optional)
+        socket.on('progress_update', (data) => {
+            console.log('Progress Update:', data);
+        });
+    </script>       
+</body>
+</html>
