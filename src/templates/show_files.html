@@ -117,7 +117,7 @@
             // Send the request
             xhr.send(formData);
         });
-        
+
         // Delete button click event
         fileList.addEventListener('click', (e) => {
             if (e.target.classList.contains('deleteBtn')) {
@@ -136,7 +136,7 @@
                 }) 
                 .then(data => {
                     console.log('Response data:', data);  // Log the server response for debugging
-                    
+
                     // If there's a success message in the response, delete the file from the list
                     if (data.message) {
                         const fileItem = document.getElementById('file-' + filename);
