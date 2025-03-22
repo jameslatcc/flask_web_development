@@ -31,15 +31,14 @@ def upload_file():
 
 @server.route('/delete/<filename>', methods=['DELETE'])
 def delete_file(filename):
-    try:
-        filepath = os.path.join(server.config['upload_path'], filename)
+    filepath = os.path.join(server.config['upload_path'], filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
         if os.path.exists(filepath):
-            os.remove(filepath)
-            return jsonify({"message": f"File '{filename}' deleted successfully!"}), 200
-        else:
-            return jsonify({"error": "File not found!"}), 404
-    except Exception as e:
-        return jsonify({"error": f"Error deleting file: {str(e)}"}), 500
+            return jsonify({"error": "File deletion failed!"}), 500
+        return jsonify({"message": f"File '{filename}' deleted successfully!"}), 200
+    else:
+        return jsonify({"error": "File not found!"}), 404
 
 @socketio.on('progress')
 def handle_progress(data):
