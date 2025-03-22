@@ -1,12 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO, emit
-import os, logging
+import os
 
 
 current_path = os.path.abspath(os.getcwd()+"/src")
-upload_path = os.path.join(current_path, 'uploads')
 server = Flask(__name__)
-server.config['upload_path'] = upload_path
+server.config['upload_path'] = os.path.join(current_path, 'uploads')
 socketio = SocketIO(server)
 
 if not os.path.exists(server.config['upload_path']):
