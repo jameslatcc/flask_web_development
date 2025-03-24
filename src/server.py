@@ -3,10 +3,11 @@ import os
 
 
 current_path = os.path.abspath(os.getcwd()+"/src")
-upload_path = os.path.join(current_path, 'uploads')
-os.makedirs(upload_path, exist_ok=True)
 server = Flask(__name__)
-server.config['upload_path'] = upload_path
+server.config['upload_path'] = os.path.join(current_path, 'uploads')
+
+if not os.path.exists(server.config['upload_path']):
+    os.makedirs(server.config['upload_path'])
 
 @server.route('/', methods=['GET'])
 def home():
