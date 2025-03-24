@@ -14,6 +14,7 @@
                     {% for file in files %}
                         <li class = "file-item"> 
                             {{ file }} 
+                            <button class="deleteBtn" data-filename="{{ file }}">Delete</button>
                         </li>
                     {% endfor %}
                 {% else %}
@@ -21,6 +22,6 @@
                 {% endif %}
             </ul>
         </div>
-    </form>
+    </form>   
 </body>
 </html>
