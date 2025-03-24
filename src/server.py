@@ -12,5 +12,10 @@ server.config['upload_path'] = upload_path
 def home():
     return render_template('index.html')
 
+@server.route('/show_files', methods=['GET'])
+def show_files():
+    files = os.listdir(server.config['upload_path'])  
+    return render_template('show_files.html', files=files)
+
 if __name__ == '__main__':
     server.run(host='0.0.0.0', port=5000, debug=True)

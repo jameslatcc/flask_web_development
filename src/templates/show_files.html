@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show Files</title>
+</head>
+<body>
+    <form id="showFilesForm" action="/show_files" method="get" enctype="multipart/form-data">
+        <div style="text-align:center">
+            <h1>Your uploaded files</h1>
+            <ul class="fileList" id="mainList" style="list-style-type: none">
+                {% if files %}
+                    {% for file in files %}
+                        <li class = "file-item"> 
+                            {{ file }} 
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class = "file-item"> No files uploaded yet </li>
+                {% endif %}
+            </ul>
+        </div>
+    </form>
+</body>
+</html>
