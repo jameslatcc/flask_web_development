@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 
 
@@ -17,6 +17,15 @@ def home():
 def show_files():
     files = os.listdir(server.config['upload_path'])  
     return render_template('show_files.html', files=files)
+
+@server.route('/uploads', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+    if file:
+        filepath = os.path.join(server.config['upload_path'], file.filename)
+        file.save(filepath)
+        return redirect(url_for('show_files'))
+    return jsonify({"error": "No file uploaded!"}), 400
 
 if __name__ == '__main__':
     server.run(host='0.0.0.0', port=5000, debug=True)
