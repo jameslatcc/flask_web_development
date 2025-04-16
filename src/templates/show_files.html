@@ -13,7 +13,8 @@
                 {% if files %}
                     {% for file in files %}
                         <li class = "file-item"> 
-                            {{ file }} 
+                            {{ file }}
+                            <button class="deleteBtn" data-filename="{{ file }}">Delete</button>
                         </li>
                     {% endfor %}
                 {% else %}
@@ -29,5 +30,44 @@
             <button type="submit">Upload</button><br><br><br>
         </form>
     </div>
+
+    <script>
+        const fileList = document.getElementById('mainList');
+
+        fileList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('deleteBtn')) {
+                const filename = e.target.getAttribute('data-filename');
+
+                // Send DELETE request to Flask
+                fetch(`/delete/${filename}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // If the response status code is not 2xx, throw an error
+                        return response.json().then(data => { throw new Error(data.error || 'Unknown error') });
+                    }
+                    return response.json(); // Proceed if response is successful
+                }) 
+                .then(data => {
+                    console.log('Response data:', data);  // Log the server response for debugging
+
+                    // If there's a success message in the response, delete the file from the list
+                    if (data.message) {
+                        const fileItem = document.getElementById('file: ' + filename);
+                        if (fileItem) {
+                            fileItem.remove();
+                        }
+                    }
+                    // Show alert with either success or error message
+                    alert(data.message || data.error);
+                })
+                .catch(err => {
+                    console.error('Error deleting file:', err);
+                    alert('Error deleting file.');
+                });
+            }
+        });
+    </script>
 </body>
 </html>

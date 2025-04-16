@@ -27,5 +27,16 @@ def upload_file():
         return redirect(url_for('show_files'))
     return jsonify({"error": "No file uploaded!"}), 400
 
+@server.route('/delete/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    filepath = os.path.join(server.config['upload_path'], filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        if os.path.exists(filepath):
+            return jsonify({"error": "File deletion failed!"}), 500
+        return jsonify({"message": f"File '{filename}' deleted successfully!"}), 200
+    else:
+        return jsonify({"error": "File not found!"}), 404
+
 if __name__ == '__main__':
     server.run(host='0.0.0.0', port=5000, debug=True)
