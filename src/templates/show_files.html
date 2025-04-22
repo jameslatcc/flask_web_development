@@ -4,6 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Show Files</title>
+    <style>
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+        }
+        .progress-bar-inner {
+            height: 20px;
+            background-color: #4caf50;
+            width: 0%;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            margin: 10px 0;
+        }
+        .file-item button {
+            background-color: rgb(237, 78, 78);
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <form id="showFilesForm" action="/show_files" method="get" enctype="multipart/form-data">
@@ -29,10 +57,59 @@
             <input type="file" name="file" id="fileInput">
             <button type="submit">Upload</button><br><br><br>
         </form>
+        <div class="progress-bar">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
     </div>
 
     <script>
         const fileList = document.getElementById('mainList');
+        const form = document.getElementById('uploadForm');
+        const progressBar = document.getElementById('progressBar');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // Create XMLHttpRequest to handle file upload
+            const xhr = new XMLHttpRequest();
+
+            // Open the request
+            xhr.open('POST', '/uploads', true);
+
+            // Handle progress updates
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percent = (event.loaded / event.total) * 100;
+                    progressBar.style.width = percent + '%';
+                    progressBar.textContent = Math.round(percent) + '%';
+                    socket.emit('progress', { progress: percent });
+                }
+            };
+
+            // When the file upload completes
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    fetch('/show_files', { method: 'GET' })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Replace the file list section with the updated list
+                        const newFileList = document.createElement('div');
+                        newFileList.innerHTML = html;
+                        const newList = newFileList.querySelector('.fileList');
+                        fileList.innerHTML = newList.innerHTML; // Update file list
+                    });
+                } else {
+                    statusDiv.textContent = 'Upload failed!';
+                }
+            };
+
+            // Send the request
+            xhr.send(formData);
+        });
 
         fileList.addEventListener('click', (e) => {
             if (e.target.classList.contains('deleteBtn')) {
